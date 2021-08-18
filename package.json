@@ -1,0 +1,21 @@
+{
+  "name": "autoupdater-for-node",
+  "version": "1.0.0",
+  "description": "Update package.json dependencies, push the updates to a separate branch and create a merge request.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.marketing-factory.de/sa/autoupdater-for-node.git"
+  },
+  "author": "Samer Alkhabbaz",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "simple-git": "^2.44.0"
+  }
+}
