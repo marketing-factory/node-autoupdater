@@ -1,0 +1,24 @@
+
+App:
+    async start(): Promise<void>
+
+
+Logger:
+    log(text: string): void
+
+GitClient(logger: Logger) extends SimpleGit:
+    - logger: Logger
+        Used for outputting log messages (e.g. to console)
+
+    - async authenticate(username: string, passwordOrToken: string): bool
+    - async createOrOverrideBranch(branchName: string): Promise<void>
+        Delete branch 'branchName' if exists and create a new branch with that name.
+
+PackageUpdater:
+    - commands: Record<string, string>
+
+    - determineUsedPackageManager(): PackageManger
+    - makeCommands(usedPackageManager: PackageManager): Record<string, string>
+    - async outdatedPackagesExist(): Promise<bool>
+    - updatePackages(): Promise<void>
+
