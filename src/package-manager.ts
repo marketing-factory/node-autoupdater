@@ -1,5 +1,5 @@
 import { execSync } from "child_process";
-import { PackageManagerCommands as commands } from "./PackageManagerCommands";
+import { PackageManagerCommands as commands } from "./package-manager-commands";
 import type { Logger } from "./app";
 
 interface OutdatedPackageInfo {
@@ -15,7 +15,7 @@ interface OutdatedPackages {
 }
 export type { OutdatedPackages };
 
-export class PackageUpdater {
+export class PackageManager {
     private logger: Logger;
     constructor(logger: Logger = console) {
         this.logger = logger;
