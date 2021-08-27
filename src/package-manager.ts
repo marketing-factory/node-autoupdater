@@ -1,57 +1,70 @@
-import { execSync } from "child_process";
-import { PackageManagerCommands as commands } from "./package-manager-commands";
-import type { Logger } from "./app";
+import { prepareCommands } from "./prepare-commands";
+import { Logger } from "./autoupdater";
+import * as path from "path";
+
+const COMMANDS = {
+  outdatedJson: (packageJsonFile: string = "./package.json") =>
+    ({ args: ["outdated", "--json"], cwd: path.dirname(packageJsonFile) }),
+  update: (packageJsonFile: string = "./package.json") =>
+    ({ args: ["update"], cwd: path.dirname(packageJsonFile) }),
+} as const;
 
 interface OutdatedPackageInfo {
-    current: string,
-    wanted: string,
-    latest: string
+  current: string,
+  wanted: string,
+  latest: string
 }
 
-interface OutdatedPackages {
-    [packageJsonFile: string]: {
-        [name: string]: OutdatedPackageInfo
-    }
+export interface OutdatedPackages {
+  [packageJsonFile: string]: {
+    [name: string]: OutdatedPackageInfo
+  }
 }
-export type { OutdatedPackages };
 
 export class PackageManager {
-    private logger: Logger;
-    constructor(logger: Logger = console) {
-        this.logger = logger;
-    }
+  private readonly logger: Logger;
+  private readonly commands = prepareCommands(this.determineUsedPackageManager(), COMMANDS);;
 
-    /**
-     * Returns null if there are no outdated packages
-     */
-    getOutdatedPackages(packageJsonFiles: string[]): OutdatedPackages {
-        const outdatedPackages: OutdatedPackages = {};
-        let outdatedPackagesOfOnePackageJsonFile: {[name: string]: OutdatedPackageInfo};
-        let outdatedPackageInfo: OutdatedPackageInfo;
-        for (const packageJsonFile of packageJsonFiles) {
-            outdatedPackagesOfOnePackageJsonFile = JSON.parse(commands.outdatedJson(packageJsonFile));
-            for (const packageName in outdatedPackagesOfOnePackageJsonFile) {
-                outdatedPackageInfo = outdatedPackagesOfOnePackageJsonFile[packageName];
-                // If current equals wanted then the package has a major update
-                if (outdatedPackageInfo.current !== outdatedPackageInfo.wanted) {
-                    // Skip other entries like 'location' and 'dependent':
-                    outdatedPackages[packageJsonFile][packageName] = {
-                        current: outdatedPackageInfo.current,
-                        wanted: outdatedPackageInfo.wanted,
-                        latest: outdatedPackageInfo.latest
-                    };
-                }
-            }
-        }
-        if (Object.keys(outdatedPackages).length === 0)
-            return null;
-        return outdatedPackages;
-    }
+  constructor(logger: Logger = console) {
+    this.logger = logger;
+  }
 
-    updatePackages(packageJsonFiles: string[]): void {
-        for (const packageJsonFile of packageJsonFiles) {
-            this.logger.log(`Updating packages in ${packageJsonFile}...`);
-            execSync(commands.update(packageJsonFile));
+  private determineUsedPackageManager(): "npm" | "yarn" {
+    return "npm";
+  }
+
+  /**
+   * @returns null if there are no outdated packages
+   */
+  getOutdatedPackages(packageJsonFiles: string[]): OutdatedPackages {
+    const outdatedPackages: OutdatedPackages = {};
+    let outdatedPackagesOfOnePackageJsonFile: { [name: string]: OutdatedPackageInfo };
+    let outdatedPackageInfo: OutdatedPackageInfo;
+    for (const packageJsonFile of packageJsonFiles) {
+      outdatedPackagesOfOnePackageJsonFile = JSON.parse(this.commands.outdatedJson(packageJsonFile));
+      for (const packageName in outdatedPackagesOfOnePackageJsonFile) {
+        outdatedPackageInfo = outdatedPackagesOfOnePackageJsonFile[packageName];
+        // If current equals wanted then the package has a major update
+        if (outdatedPackageInfo.current !== outdatedPackageInfo.wanted) {
+          // Skip other entries like 'location' and 'dependent':
+          outdatedPackages[packageJsonFile][packageName] = {
+            current: outdatedPackageInfo.current,
+            wanted: outdatedPackageInfo.wanted,
+            latest: outdatedPackageInfo.latest
+          };
         }
+      }
     }
+    if (Object.keys(outdatedPackages).length === 0)
+      return null;
+    return outdatedPackages;
+  }
+
+  updatePackages(packageJsonFiles: string[]): void {
+    for (const packageJsonFile of packageJsonFiles) {
+      this.logger.log(`Updating packages in ${packageJsonFile}...`);
+      this.commands.update(packageJsonFile);
+    }
+  }
+
 }

@@ -1,38 +1,47 @@
-import { Gitlab, Types as GitlabTypes } from '@gitbeaker/node';
-import { execSync } from "child_process";
-import { GitCommands as Git } from "./git-commands";
-import type { Logger } from "./app";
+import { prepareCommands } from './prepare-commands';
+import { Logger } from "./autoupdater";
+
+const GIT_COMMANDS = {
+  checkoutBranch: (branch: string) => ["checkout", branch],
+  createBranch: (branch: string) => ["branch", branch],
+  deleteBranch: (branch: string) => ["branch", "-d", branch],
+  branchExists: (branch: string) => ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`],
+  stageAndCommit: (message: string) => ["commit", "-am", message],
+  push: (repository = "", branch = "") => ["push", repository, branch]
+} as const;
 
 export class GitClient {
-    private logger: Logger;
-    private gitlab: InstanceType<typeof Gitlab>;
+  private readonly logger: Logger;
+  private readonly git = prepareCommands("git", GIT_COMMANDS);
 
-    constructor(logger: Logger = console) {
-        this.logger = logger;
-        this.gitlab = new Gitlab({});
+  constructor(logger: Logger = console) {
+    this.logger = logger;
+  }
+
+  createAndCheckoutBranch(branch: string) {
+    this.git.createBranch(branch);
+    this.git.checkoutBranch(branch);
+  }
+
+  branchExists(branch: string): boolean {
+    try {
+      this.git.branchExists(branch);
+      return true;
+    } catch (error) {
+      return false;
     }
+  }
 
-    /*async authenticate(username: string, passwordOrToken: string): Promise<boolean> {
+  deleteBranch(branch: string) {
+    this.git.deleteBranch(branch);
+  }
 
-    }*/
+  addAndCommitChanges(message: string, branch: string) {
+    this.git.checkoutBranch(branch);
+    this.git.stageAndCommit(message);
+  }
 
-    createAndCheckoutBranch(branchName: string) {
-        if (this.branchExists(branchName)) {
-            this.logger.log(`Deleting old ${branchName} branch...`);
-            execSync(Git.deleteBranch(branchName));
-        }
-        this.logger.log(`Creating new branch ${branchName}`);
-        execSync(Git.createAndCheckoutBranch(branchName));
-    }
-
-    branchExists(branchName: string): boolean {
-        try {
-            execSync(`git show-ref --verify --quiet refs/heads/${branchName}`);
-            return true;
-        } catch (error) {
-            return false;
-        }
-    }
+  push(repository: string, branch: string) {
+    this.git.push(repository, branch);
+  }
 }
-
-let ok = new GitClient(console);
