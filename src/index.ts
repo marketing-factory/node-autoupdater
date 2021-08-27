@@ -1,4 +1,4 @@
-import { App } from "./app";
+import { Autoupdater } from "./autoupdater";
 
-const app: App = new App();
+const app: Autoupdater = new Autoupdater();
 app.start();
