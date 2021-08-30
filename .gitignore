@@ -57,8 +57,9 @@ node_modules/
 .yarn/install-state.gz
 .pnp.*
 
-# PhpStorm
-.idea/
+# editor
+# .idea/
+# .vscode/
 
 # built TypeScript
 dist/
