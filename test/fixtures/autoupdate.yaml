@@ -1,0 +1,11 @@
+gitlab_url: https://gitlab.com/
+gitlab_user_username: autoupdater
+gitlab_user_email: autoupdater@example.org
+gitlab_auth_token: personalaccesstoken123
+gitlab_project_name: example-project
+  
+assignee: johndoe
+branch: support/autoupdate
+target_branch: develop
+packages:
+  - package.json

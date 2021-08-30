@@ -1,0 +1,6 @@
+assignee: johndoe
+branch: automatic-updates
+target_branch: main
+packages:
+  - package.json
+  - sub-project/package.json
