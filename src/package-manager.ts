@@ -23,10 +23,13 @@ export interface OutdatedPackages {
 
 export class PackageManager {
   private readonly logger: Logger;
-  private readonly commands = prepareCommands(this.determineUsedPackageManager(), COMMANDS);;
+  private readonly commands = prepareCommands(this.determineUsedPackageManager(), COMMANDS);
 
-  constructor(logger: Logger = console) {
+  constructor(logger: Logger = console, usedPackageManagerName?: "npm" | "yarn") {
     this.logger = logger;
+    if (usedPackageManagerName) {
+      this.commands = prepareCommands(usedPackageManagerName, COMMANDS);;
+    }
   }
 
   private determineUsedPackageManager(): "npm" | "yarn" {
