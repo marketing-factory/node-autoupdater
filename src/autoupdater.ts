@@ -1,7 +1,7 @@
 import { PackageManager, OutdatedPackages } from "./package-manager";
 import { GitClient } from "./git-client";
 import { ConfigurationManager, ConfigurationData } from "./configuration-manager";
-import { Gitlab } from "./gitlab";
+import { Gitlab } from "./git-hosting-providers/gitlab";
 
 export interface Logger {
   log(message: string): void,
@@ -25,10 +25,15 @@ export class Autoupdater {
   }
 
   start() {
-    this.config = ConfigurationManager.getConfigurationData();
+    try {
+      this.config = ConfigurationManager.getConfigurationData();
+    } catch (error) {
+      this.logger.error(`Error while loading configuration: ${error}`);
+      return;
+    }
     const packageJsonFiles = this.config.packages;
-    this.outdatedPackages = this.packageManager.getOutdatedPackages(packageJsonFiles);
 
+    this.outdatedPackages = this.packageManager.getOutdatedPackages(packageJsonFiles);
     if (this.outdatedPackages === null) {
       this.logger.log("No updates are needed.");
     } else {

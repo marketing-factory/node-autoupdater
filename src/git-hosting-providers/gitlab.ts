@@ -1,5 +1,5 @@
 import { Gitlab as GitlabApi, Types as GitlabTypes } from "@gitbeaker/node";
-import { ConfigurationData } from "./configuration-manager";
+import { ConfigurationData } from "../configuration-manager";
 import { GitHostingProvider } from "./git-hosting-provider";
 
 export class Gitlab implements GitHostingProvider {
@@ -33,8 +33,8 @@ export class Gitlab implements GitHostingProvider {
       });
       if (users.length)
         return users[0];
-      return null;
     }
+    return null;
   }
 
   async getLastAutoupdateMergeRequest() {
