@@ -1,7 +1,32 @@
 {
+  "typescript.check.tscVersion": false,
+  "files.exclude": {
+    "**/*.js": {
+      "when": "$(basename).ts"
+    },
+    "**/*.map": {
+      "when": "$(basename).map"
+    }
+  },
   "cSpell.words": [
     "AUTOUPDATER",
     "autoupdate",
-    "gitbeaker"
+    "gitbeaker",
+    "memfs"
+  ],
+  "cSpell.enableFiletypes": [
+    "!cpp",
+    "!go",
+    "!graphql",
+    "!handlebars",
+    "!haskell",
+    "!jade",
+    "!java",
+    "!latex",
+    "!pug",
+    "!rust",
+    "!scala",
+    "jsx",
+    "powershell"
   ]
 }
