@@ -9,10 +9,13 @@
     }
   },
   "cSpell.words": [
-    "AUTOUPDATER",
     "autoupdate",
+    "AUTOUPDATER",
+    "execa",
     "gitbeaker",
-    "memfs"
+    "Jikgcv",
+    "memfs",
+    "toplevel"
   ],
   "cSpell.enableFiletypes": [
     "!cpp",
