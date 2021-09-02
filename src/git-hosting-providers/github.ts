@@ -9,12 +9,6 @@ export class Github implements GitHostingProvider {
     this.config = config;
   }
 
-  async getProject() {
-  }
-
-  async getAssignee() {
-  }
-
   async getLastAutoupdateMergeRequest() {
   }
 
