@@ -5,8 +5,8 @@ import { GitHostingProvider } from "./git-hosting-provider";
 export class Gitlab implements GitHostingProvider {
   private readonly api: InstanceType<typeof GitlabApi>;
   private readonly config: ConfigurationData;
-  private project: GitlabTypes.ProjectExtendedSchema;
-  private assignee: GitlabTypes.UserSchema;
+  private projectId: Promise<number>;
+  private assigneeId: Promise<number | undefined>;
 
   constructor(config: ConfigurationData) {
     this.config = config;
@@ -14,32 +14,28 @@ export class Gitlab implements GitHostingProvider {
       host: config.gitlab_url, 
       token: config.gitlab_auth_token
     });
-    this.init();
+    this.projectId = this.getProjectId();
+    this.assigneeId = this.getAssigneeId();  
   }
 
-  async init() {
-    this.project = await this.getProject();
-    this.assignee = await this.getAssignee();
+  async getProjectId() {
+    return (await this.api.Projects.show(this.config.gitlab_project_name)).id;
   }
 
-  async getProject() {
-    return await this.api.Projects.show(this.config.gitlab_project_name);
-  }
-
-  async getAssignee() {
+  async getAssigneeId() {
     if (this.config.assignee) {
       const users = await this.api.Users.all({
         "username": this.config.assignee
       });
       if (users.length)
-        return users[0];
+        return users[0].id;
     }
-    return null;
+    return undefined;
   }
 
   async getLastAutoupdateMergeRequest() {
     const mergeRequests = await this.api.MergeRequests.all({
-      projectId: this.project.id,
+      projectId: await this.projectId,
       sourceBranch: this.config.branch,
       state: "opened"
     });
@@ -50,12 +46,12 @@ export class Gitlab implements GitHostingProvider {
 
   async createMergeRequest(title: string, description: string) {
     await this.api.MergeRequests.create(
-      this.project.id,
+      await this.projectId,
       this.config.branch,
       this.config.target_branch,
       title,
       {
-        assigneeId: this.assignee.id,
+        assigneeId: await this.assigneeId,
         description: description,
         removeSourceBranch: true,
         squash: true
@@ -65,12 +61,12 @@ export class Gitlab implements GitHostingProvider {
 
   async updateMergeRequest(mergeRequestIid: number, title: string, description: string) {
     await this.api.MergeRequests.edit(
-      this.project.id,
+      await this.projectId,
       mergeRequestIid,
       {
         title: title,
         description: description,
-        assigneeId: this.assignee.id,
+        assigneeId: await this.assigneeId,
         removeSourceBranch: true,
         squash: true
       }
