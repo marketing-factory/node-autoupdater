@@ -21,9 +21,10 @@
   "author": "Samer Alkhabbaz <samer.alkhabbaz@marketing-factory.de>",
   "license": "ISC",
   "devDependencies": {
+    "@types/common-ancestor-path": "^1.0.0",
     "@types/jest": "^27.0.1",
     "@types/js-yaml": "^4.0.3",
-    "@types/node": "^16.7.0",
+    "@types/node": "^16.7.6",
     "jest": "^27.0.6",
     "memfs": "^3.2.2",
     "ts-jest": "^27.0.5",
@@ -31,6 +32,8 @@
   },
   "dependencies": {
     "@gitbeaker/node": "^31.1.0",
+    "common-ancestor-path": "^1.0.1",
+    "execa": "^5.1.1",
     "js-yaml": "^4.1.0"
   }
 }

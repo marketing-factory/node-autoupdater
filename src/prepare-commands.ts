@@ -1,4 +1,4 @@
-import { execFileSync } from "child_process";
+import execa from "execa";
 
 type RawCommand = string[] | {
   args: string[],
@@ -22,7 +22,7 @@ type ReadyCommands<Commands extends CommandsShape> = {
  * // Executes 'git commit -m "Hello world"' in a child process:
  * commands.commit('Hello world');
  */
-export function prepareCommands<Commands extends CommandsShape>(defaultExecutable: string, commands: Commands): ReadyCommands<Commands> {
+export function prepareCommands<Commands extends CommandsShape>(defaultExecutable: string, commands: Commands, defaultCwd=process.cwd()): ReadyCommands<Commands> {
   type RC = ReadyCommands<Commands>;
   let readyCommands: RC = {} as RC;
   for (const command in commands) {
@@ -34,18 +34,18 @@ export function prepareCommands<Commands extends CommandsShape>(defaultExecutabl
       if (Array.isArray(rawCommand)) {
         executable = defaultExecutable;
         commandArgs = rawCommand;
-        cwd = ".";
+        cwd = defaultCwd;
       } else {
         executable = rawCommand.executable ?? defaultExecutable;
         commandArgs = rawCommand.args;
-        cwd = rawCommand.cwd ?? ".";
+        cwd = rawCommand.cwd ?? defaultCwd;
       }
 
-      return execFileSync(
+      return execa.sync(
         executable,
         commandArgs.filter(x => x.length), // remove empty strings
-        { cwd }
-      ).toString().trim();
+        { cwd, stdio: "pipe" }
+      ).stdout.trim();
     });
     
   }
