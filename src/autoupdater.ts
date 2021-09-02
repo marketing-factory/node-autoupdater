@@ -1,59 +1,63 @@
-import { PackageManager, OutdatedPackages } from "./package-manager";
-import { GitClient } from "./git-client";
+import * as PackageManager from "./package-manager";
+import { getGitClient } from "./git-client";
 import { ConfigurationManager, ConfigurationData } from "./configuration-manager";
 import { Gitlab } from "./git-hosting-providers/gitlab";
-
-export interface Logger {
-  log(message: string): void,
-  error(message: string): void,
-  group(label: string): void,
-  groupEnd(): void
-}
+import { logger } from "./logger";
 
 export class Autoupdater {
-  private readonly packageManager: PackageManager;
-  private readonly git: GitClient;
+  private readonly git: Exclude<ReturnType<typeof getGitClient>, null>;
   private readonly gitlab: Gitlab;
-  private readonly logger: Logger = console;
-  private config: ConfigurationData;
-  private outdatedPackages: OutdatedPackages;
+  private readonly config: ConfigurationData;
+  private outdatedPackages: PackageManager.OutdatedPackages | null = null;
 
-  constructor() {
-    this.packageManager = new PackageManager(this.logger);
-    this.git = new GitClient(this.logger);
-    this.gitlab= new Gitlab(this.config);
+  constructor(...configurationFilePaths: string[]) {
+    // TODO: Improve error handling to avoid this mess:
+    logger.group("Loading configuration...");
+    const config = ConfigurationManager.getConfigurationData(...configurationFilePaths);
+    logger.groupEnd();
+    if (config) {
+      this.config = config;
+      this.gitlab= new Gitlab(this.config);
+      const git = getGitClient(this.config.project_root_directory);
+      if (git)
+        this.git = git
+      else
+        throw new Error();
+    } else {
+      throw new Error();
+    }
   }
 
   start() {
-    try {
-      this.config = ConfigurationManager.getConfigurationData();
-    } catch (error) {
-      this.logger.error(`Error while loading configuration: ${error}`);
-      return;
-    }
-    const packageJsonFiles = this.config.packages;
+    this.git.checkoutBranch(this.config.target_branch);
+    this.cleanStateChangesByLastAutoupdate();
 
-    this.outdatedPackages = this.packageManager.getOutdatedPackages(packageJsonFiles);
+    const packageJsonFiles = this.config.packages;
+    this.outdatedPackages = PackageManager.getOutdatedPackages(packageJsonFiles);
     if (this.outdatedPackages === null) {
-      this.logger.log("No updates are needed.");
+      logger.log("No updates are needed.");
     } else {
-      this.cleanSideEffectsOfLastAutoupdate();
-      this.git.createAndCheckoutBranch(this.config.branch)
-      this.packageManager.updatePackages(packageJsonFiles);
+      this.git.createBranch(this.config.branch);
+      this.git.checkoutBranch(this.config.branch);
+      PackageManager.updatePackages(packageJsonFiles);
       this.git.addAndCommitChanges(this.generateCommitMessage(true), this.config.branch);
 
       this.git.push(this.getRemoteUrl(), this.config.branch);
+      this.git.checkoutBranch(this.config.target_branch);
       this.createOrUpdateMergeRequest();
+      
     }
   }
 
-  cleanSideEffectsOfLastAutoupdate() {
-    this.logger.group(`Cleaning state changes caused by last autoupdate`);
+  cleanStateChangesByLastAutoupdate() {
+    logger.group(`Cleaning state changes caused by last autoupdate`);
     if (this.git.branchExists(this.config.branch)) {
-      this.logger.log(`Deleting old branch '${this.config.branch}'...`);
-      this.git.deleteBranch(this.config.branch);
+      logger.log(`Deleting old local branch '${this.config.branch}'...`);
+      this.git.deleteLocalBranch(this.config.branch);
+      logger.log(`Deleting old remote branch '${this.config.branch}'...`);
+      this.git.deleteRemoteBranch(this.getRemoteUrl(), this.config.branch);
     }
-    this.logger.groupEnd();
+    logger.groupEnd();
   }
 
   getRemoteUrl(useBasicAuth=false): string {
@@ -80,9 +84,9 @@ export class Autoupdater {
 
   async createOrUpdateMergeRequest() {
     let lastAutoupdateMergeRequest = await this.gitlab.getLastAutoupdateMergeRequest();
-    if (lastAutoupdateMergeRequest) {
+    if (!lastAutoupdateMergeRequest) {
 
-      this.logger.log("Creating merge request...");
+      logger.log("Creating merge request...");
       await this.gitlab.createMergeRequest(
         this.generateCommitTitle(),
         this.generateCommitMessage()
@@ -90,7 +94,7 @@ export class Autoupdater {
 
     } else {
 
-      this.logger.log("Updating merge request...");
+      logger.log("Updating merge request...");
       await this.gitlab.updateMergeRequest(
         lastAutoupdateMergeRequest.iid,
         this.generateCommitTitle(),
