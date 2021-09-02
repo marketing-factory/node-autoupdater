@@ -1,4 +1,8 @@
 import { Autoupdater } from "./autoupdater";
 
-const app: Autoupdater = new Autoupdater();
-app.start();
+try {
+  const app: Autoupdater = new Autoupdater();
+  app.start();
+} catch (error) {
+  console.error(error);
+}

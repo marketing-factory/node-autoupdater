@@ -63,3 +63,6 @@ node_modules/
 
 # built TypeScript
 dist/
+
+# config file for testing
+.autoupdater.yaml
