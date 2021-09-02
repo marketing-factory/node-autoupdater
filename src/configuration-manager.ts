@@ -1,10 +1,12 @@
-import { load as loadYaml } from "js-yaml";
+import { load, load as loadYaml } from "js-yaml";
 import fs from "fs";
-import { join as pathJoin } from "path";
+import path from "path";
 import { homedir } from "os";
+import { getGitClient, getGitRootDirectory } from "./git-client";
+import commonAncestorPath from "common-ancestor-path";
+import { logger } from "./logger";
 
-
-export interface ConfigurationData {
+interface ConfigurationDataPreComputation {
   // App Configuration
   "gitlab_url": string,
   "gitlab_user_username"?: string,
@@ -12,20 +14,31 @@ export interface ConfigurationData {
   "gitlab_auth_token"?: string,
   // Project Configuration
   "gitlab_project_name": string,
+  "project_root_directory": Computed<string>,
   "assignee"?: string,
   "branch": string,
   "target_branch": string,
   "packages": string[],
-}
+};
 
 /*
 Priority order from lowest to highest (High priority configuration overrides low priority configuration): 
 DEFAULT_CONFIGURATION_DATA
 CONFIGURATION_SEARCH_PATHS
 CONFIGURATION_ENV_VARIABLES
+
+The paths of package.json files, if not absolute, are relative to the configuration file they are
+defined in.
+
+The project root directory, if not provided in a configuration file, is determined as follows:
+  - The longest common ancestor directory of all provided package.json files is calculated.
+  - The project root is then assumed to be the closest directory to the common ancestor that has 
+    a .git/ folder.
+
+
 */
 
-const DEFAULT_CONFIGURATION_DATA: ConfigurationData = {
+const DEFAULT_CONFIGURATION_DATA: ConfigurationDataPreComputation = {
   // App Configuration
   "gitlab_url": "https://gitlab.com/",
   "gitlab_user_username": "",
@@ -33,96 +46,209 @@ const DEFAULT_CONFIGURATION_DATA: ConfigurationData = {
   "gitlab_auth_token": "",
   // Project Configuration
   "gitlab_project_name": "",
+  "project_root_directory": computeProjectRoot,
   "assignee": "",
   "branch": "support/autoupdate",
   "target_branch": "develop",
-  "packages": [pathJoin(process.cwd(), "package.json")],
+  "packages": [path.join(process.cwd(), "package.json")],
 };
 
 // Last path has highest priority
 const CONFIGURATION_FILE_PATHS = [
   "/etc/.autoupdater.yaml",
-  pathJoin(homedir(), ".autoupdater.yaml"),
+  path.join(homedir(), ".autoupdater.yaml"),
   `${process.cwd()}/.autoupdater.yaml`,
 ];
 
-const CONFIGURATION_ENV_VARIABLES: Partial<Record<keyof ConfigurationData, string>> = {
+const CONFIGURATION_ENV_VARIABLES: Partial<Record<keyof ConfigurationDataPreComputation, string>> = {
   "gitlab_project_name": "AUTOUPDATER_PROJECT_NAME",
 };
 
+
+type Computed<TypeAfterComputation> = TypeAfterComputation | (
+  (config: ConfigurationDataPreComputation, loadedValue?: TypeAfterComputation) => TypeAfterComputation
+);
+
+type C = ConfigurationDataPreComputation;
+export type ConfigurationData = {
+  [Key in keyof C]: C[Key] extends Computed<any> ? Exclude<C[Key], (...args: any[]) => any> : C[Key]
+};
+
+function computeProjectRoot({ packages }: ConfigurationDataPreComputation, loadedValue?: string): string {
+  if (loadedValue) return loadedValue;
+  
+  packages = packages.map(p => path.resolve(p));
+  const commonAncestor = commonAncestorPath(...packages);
+  if (commonAncestor) {
+    return getGitRootDirectory(path.dirname(commonAncestor)) ?? "";
+  }
+  return "";
+}
+
+function isConfigurationData(configurationData: Partial<ConfigurationData>): configurationData is ConfigurationData {
+  return (
+    typeof configurationData.gitlab_url === "string" && configurationData.gitlab_url.length > 0 &&
+    typeof configurationData.gitlab_project_name === "string" && configurationData.gitlab_project_name.length > 0 &&
+    typeof configurationData.project_root_directory === "string" && configurationData.project_root_directory.length > 0 &&
+    typeof configurationData.branch === "string" && configurationData.branch.length > 0 &&
+    typeof configurationData.target_branch === "string" && configurationData.target_branch.length > 0 &&
+    Array.isArray(configurationData.packages) && typeof configurationData.packages[0] === "string" &&
+    configurationData.packages[0].length > 0
+  );
+}
+
 export abstract class ConfigurationManager {
-  private static configurationData = DEFAULT_CONFIGURATION_DATA;
+  private static configurationData: ConfigurationData;
   private static configurationFilePaths = CONFIGURATION_FILE_PATHS;
   private static configurationDataIsLoaded = false;
   
-  static getConfigurationData(...configurationFilePaths: string[]): ConfigurationData {
-    this.configurationFilePaths = [...this.configurationFilePaths, ...configurationFilePaths];
-    if (!this.configurationDataIsLoaded) {
-      this.loadConfigurationData();
-      this.configurationDataIsLoaded = true;
+  static getConfigurationData(...configurationFilePaths: string[]) {
+    try {
+      this.configurationFilePaths = [...this.configurationFilePaths, ...configurationFilePaths];
+      if (!this.configurationDataIsLoaded) {
+        this.loadConfigurationData();
+        this.configurationDataIsLoaded = true;
+      }
+      return this.configurationData;
+    } catch (error) {
+      logger.error(error);
+      return null;
     }
-    return this.configurationData;
   }
 
-  static deleteConfigurationData() {
-    this.configurationData = DEFAULT_CONFIGURATION_DATA;
+  static resetConfigurationData() {
     this.configurationDataIsLoaded = false;
   }
 
   private static loadConfigurationData() {
-    this.loadConfigurationFromFiles();
-    this.loadConfigurationFromEnvVariables();
-    this.validateLoadedConfiguration();
+    const configurationDataPreComputation = {
+      ...DEFAULT_CONFIGURATION_DATA,
+      ...this.loadConfigurationFromFiles(),
+      ...this.loadConfigurationFromEnvVariables(),
+    };
+    this.configurationData = this.resolveComputedConfigurationData(configurationDataPreComputation);
+    this.cleanAndValidateLoadedConfiguration();
   }
 
   private static loadConfigurationFromFiles() {
-    let configurationFromOneFile: Partial<ConfigurationData>;
+    let configurationDataFromFiles: Partial<ConfigurationData> = {};
     for (const file of this.configurationFilePaths) {
       if (fs.existsSync(file)) {
         try {
-          configurationFromOneFile = loadYaml(fs.readFileSync(file, "utf-8"));
-          this.configurationData = { ...this.configurationData, ...configurationFromOneFile };
+          let loadedYaml = loadYaml(fs.readFileSync(file, "utf-8")) as Partial<ConfigurationData>;
+          if (loadedYaml && typeof loadedYaml === "object") {
+            // TODO: do this for all config values that are paths
+            if (loadedYaml.hasOwnProperty("packages") && Array.isArray(loadedYaml.packages)) {
+              loadedYaml.packages = loadedYaml.packages.map(p =>  path.resolve(file, "..", p));
+            }
+            configurationDataFromFiles = { ...configurationDataFromFiles, ...loadedYaml };
+          } else {
+            throw new Error(`Configuration file is not in correct format.`);
+          }
         } catch (error) {
           throw new Error(`Error while loading configuration from file ${file}: ${error.message}`);
         }
       }
     }
+    return configurationDataFromFiles;
   }
 
   private static loadConfigurationFromEnvVariables() {
-    let envConfigurationData: Partial<Record<keyof ConfigurationData, unknown>> = {};
-    let configurationName: keyof ConfigurationData;
-    let envVariable: string;
-
-    for (configurationName in CONFIGURATION_ENV_VARIABLES) {
-      envVariable = process.env[CONFIGURATION_ENV_VARIABLES[configurationName]];
-      if (!envVariable) continue;
-
-      if (typeof DEFAULT_CONFIGURATION_DATA[configurationName] === "string") {
-        envConfigurationData[configurationName] = envVariable;
-      } else {
-        try {
-          envConfigurationData[configurationName] = JSON.parse(envVariable);
-        } catch (error) {
-          throw new Error(`Non-string env variables must be in JSON format!\n${error.message}`);
+    let envConfigurationData: Partial<ConfigurationDataPreComputation> = {};
+    let configKey: keyof typeof CONFIGURATION_ENV_VARIABLES;
+    let envVariable: string | undefined;
+    
+    for (configKey in CONFIGURATION_ENV_VARIABLES) {
+      let configValue = CONFIGURATION_ENV_VARIABLES[configKey];
+      if (configValue)
+        envVariable = process.env[configValue];
+      
+      if (envVariable) {
+        if (typeof DEFAULT_CONFIGURATION_DATA[configKey] === "string") {
+          envConfigurationData = { ...envConfigurationData, [configKey]: envVariable };
+        } else {
+          try {
+            envConfigurationData[configKey] = JSON.parse(envVariable);
+          } catch (error) {
+            throw new Error(`Non-string env variables must be JSON parsable!\n${error.message}`);
+          }
         }
       }
-
+        
     }
-
-    this.configurationData = { ...this.configurationData, ...envConfigurationData as ConfigurationData }
+    
+    return envConfigurationData;
   }
 
-  private static validateLoadedConfiguration() {
+  private static resolveComputedConfigurationData(configurationDataPreComputation: ConfigurationDataPreComputation) {
+    let computedConfigurationData: Partial<ConfigurationData> = {};
+    let configKey: keyof ConfigurationDataPreComputation;
+    for (configKey in configurationDataPreComputation) {
+      let configValue = configurationDataPreComputation[configKey];
+      let defaultConfigValue = DEFAULT_CONFIGURATION_DATA[configKey];
+      if (typeof defaultConfigValue === "function") {
+        if (typeof configValue === "function") {
+          computedConfigurationData = { 
+            ...computedConfigurationData,
+            [configKey]: defaultConfigValue(configurationDataPreComputation)
+          };
+        // TODO: allow other types than string to be computed
+        } else if (typeof configValue === "string") {
+          computedConfigurationData = {
+            ...computedConfigurationData,
+            [configKey]: defaultConfigValue(configurationDataPreComputation, configValue)
+          };
+        }
+      } else {
+        computedConfigurationData = {
+          ...computedConfigurationData,
+          [configKey]: configValue
+        };
+      }
+    }
+
+    /*if (isConfigurationData(computedConfigurationData))
+      return computedConfigurationData;
+    else
+      throw new Error(`One or more required configurations are missing.`);*/
+    return computedConfigurationData as ConfigurationData;
+  }
+
+  private static cleanAndValidateLoadedConfiguration() {
+    // gitlab_project_name is required
     if (!this.configurationData.gitlab_project_name) {
       throw new Error(
         "Please either specify gitlab_project_name in autoupdater.yaml or " +
         "supply the AUTOUPDATER_PROJECT_NAME env variable)"
       );
     }
+
+    const git = getGitClient(this.configurationData.project_root_directory);
+
+    // package.json files must belong to the same project which must be a git repository
+    if (git === null) {
+      throw new Error(
+        `The package.json files provided in one of the configuration files do not belong to the same project ` +
+        `or the project root is not a git repository. package.json files: ${this.configurationData.packages}`
+      );
+    }
+    // target branch must exist
+    if (!git.branchExists(this.configurationData.target_branch)) {
+      throw new Error(`Branch "${this.configurationData.target_branch}" does not exist.`);
+    }
+    // branch must be different from target branch
+    if (this.configurationData.branch === this.configurationData.target_branch) {
+      throw new Error(`Autoupdate branch must be different from target branch "${this.configurationData.target_branch}".`);
+    }
+
+    // no unknown configuration is present
+    // TODO
+
+    // all user provided package.json files must exist
+    this.configurationData.packages.forEach((packageJsonFile: string) => {
+      if (!fs.existsSync(packageJsonFile))
+        throw new Error(`Could not find package.json file "${packageJsonFile}".`);
+    });
   }
 
-  /*getConfig(key: keyof ConfigObject): ConfigObject[keyof ConfigObject] {
-      return ;
-  }*/
 }

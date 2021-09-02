@@ -1,5 +1,6 @@
 import fs from "fs";
 import { vol } from "memfs";
+import path from "path";
 import { ConfigurationManager } from "../../src/configuration-manager";
 import { getConfigFileAsString } from "../fixtures/get-config-file";
 
@@ -8,12 +9,30 @@ const CONFIGURATION_FILES = {
   "/autoupdate-high-priority.yaml": getConfigFileAsString("autoupdate-high-priority.yaml"),
 };
 
+process.chdir("/");
+
 jest.mock("fs");
+
+jest.mock("../../src/git-client", () => {
+  const originalModule = jest.requireActual("../../src/git-client");
+  return {
+    __esModule: true,
+    ...originalModule,
+    getGitClient: (directory: string) => {
+      return { branchExists: (branch: string) => true };
+    },
+    getGitRootDirectory: (_?: string) => "/"
+  };
+});
 
 describe(ConfigurationManager.getConfigurationData, () => {
   beforeEach(() => {
     vol.reset();
-    ConfigurationManager.deleteConfigurationData();
+    vol.fromJSON({
+      "/package.json": "",
+      "/sub-project/package.json": ""
+    });
+    ConfigurationManager.resetConfigurationData();
   });
 
   it("loads configuration from specified config file", () => {
@@ -27,10 +46,11 @@ describe(ConfigurationManager.getConfigurationData, () => {
       gitlab_user_email: "autoupdater@example.org",
       gitlab_auth_token: "personalaccesstoken123",
       gitlab_project_name: "example-project",
+      project_root_directory: "/",
       assignee: "johndoe",
       branch: "support/autoupdate",
       target_branch: "develop",
-      packages: ["package.json"]
+      packages: [path.resolve("/", "package.json")]
     });
   });
 
@@ -46,10 +66,11 @@ describe(ConfigurationManager.getConfigurationData, () => {
       gitlab_user_email: "autoupdater@example.org",
       gitlab_auth_token: "personalaccesstoken123",
       gitlab_project_name: "example-project",
+      project_root_directory: "/",
       assignee: "johndoe",
       branch: "automatic-updates",
       target_branch: "main",
-      packages: ["package.json", "sub-project/package.json"]
+      packages: ["package.json", "sub-project/package.json"].map(p => path.resolve("/", p))
     });
   });
 
@@ -59,6 +80,6 @@ describe(ConfigurationManager.getConfigurationData, () => {
 
     const config = ConfigurationManager.getConfigurationData("/autoupdate.yaml");
 
-    expect(config.gitlab_project_name).toEqual("test-project-123");
+    expect(config!.gitlab_project_name).toEqual("test-project-123");
   });
 });
