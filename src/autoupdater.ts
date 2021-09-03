@@ -70,7 +70,7 @@ export class Autoupdater {
   }
 
   generateCommitTitle(): string {
-    return `Automatic update on ${Date.now().toLocaleString()}`;
+    return `Automatic update on ${(new Date()).toLocaleString()}`;
   }
 
   generateCommitMessage(generateTitle=false, outdatedPackages=this.outdatedPackages): string {
@@ -78,7 +78,14 @@ export class Autoupdater {
     if (generateTitle) {
       message += this.generateCommitTitle() + "\n\n";
     }
-    message += `${JSON.stringify(outdatedPackages)}`;
+    for (const packageJsonFile in outdatedPackages) {
+      message += packageJsonFile + ":\n";
+      for (const packageName in outdatedPackages[packageJsonFile]) {
+        const { currentVersion, wantedVersion } = outdatedPackages[packageJsonFile];
+        message += `  packageName (${currentVersion} -> ${wantedVersion})\n`;
+      }
+      message += "\n";
+    }
     return message;
   }
 
