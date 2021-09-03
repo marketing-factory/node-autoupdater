@@ -1,2 +1,3 @@
 #!/usr/bin/env node
-require('../dist/index');
+require("ts-node/register");
+require('../src/index');
