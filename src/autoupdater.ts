@@ -3,6 +3,7 @@ import { getGitClient } from "./git-client";
 import { ConfigurationManager, ConfigurationData } from "./configuration-manager";
 import { Gitlab } from "./git-hosting-providers/gitlab";
 import { logger } from "./logger";
+import path from "path";
 
 export class Autoupdater {
   private readonly git: Exclude<ReturnType<typeof getGitClient>, null>;
@@ -22,9 +23,9 @@ export class Autoupdater {
       if (git)
         this.git = git
       else
-        throw new Error();
+        throw new Error("Couldn't find project root.");
     } else {
-      throw new Error();
+      throw new Error("An error occurred while loading configuration.");
     }
   }
 
@@ -44,7 +45,9 @@ export class Autoupdater {
 
       this.git.push(this.getRemoteUrl(), this.config.branch);
       this.git.checkoutBranch(this.config.target_branch);
-      this.createOrUpdateMergeRequest();
+      this.createOrUpdateMergeRequest().then(() => {
+        logger.log("Autoupdate completed.");
+      });
       
     }
   }
@@ -54,6 +57,8 @@ export class Autoupdater {
     if (this.git.branchExists(this.config.branch)) {
       logger.log(`Deleting old local branch '${this.config.branch}'...`);
       this.git.deleteLocalBranch(this.config.branch);
+    }
+    if (this.git.remoteBranchExists(this.getRemoteUrl(), this.config.branch)) {
       logger.log(`Deleting old remote branch '${this.config.branch}'...`);
       this.git.deleteRemoteBranch(this.getRemoteUrl(), this.config.branch);
     }
@@ -73,30 +78,46 @@ export class Autoupdater {
     return `Automatic update on ${(new Date()).toLocaleString()}`;
   }
 
-  generateCommitMessage(generateTitle=false, outdatedPackages=this.outdatedPackages): string {
+  generateCommitMessage(generateTitle=false, markdown=false, outdatedPackages=this.outdatedPackages): string {
     let message = "";
+
     if (generateTitle) {
-      message += this.generateCommitTitle() + "\n\n";
+      if (markdown) message += "## ";
+      message +=`${this.generateCommitTitle()}\n\n`;
     }
+    
     for (const packageJsonFile in outdatedPackages) {
-      message += packageJsonFile + ":\n";
+      let projectName = path.relative(
+        path.join(this.config.project_root_directory, ".."), 
+        path.join(packageJsonFile, "..")
+      );
+      if (markdown) projectName = "```" + projectName + "```";
+      if (markdown) message += "### ";
+      message += `Updates for ${projectName}\n`;
       for (const packageName in outdatedPackages[packageJsonFile]) {
-        const { currentVersion, wantedVersion } = outdatedPackages[packageJsonFile];
-        message += `  packageName (${currentVersion} -> ${wantedVersion})\n`;
+        const { current, wanted } = outdatedPackages[packageJsonFile][packageName];
+        let update = `${packageName} (${current} => ${wanted})`;
+        if (markdown) update = "```" + update + "```"
+        message += `  - ${update})\n`;
       }
       message += "\n";
     }
+
     return message;
   }
 
   async createOrUpdateMergeRequest() {
+    /* ISSUE: Pushing to the autoupdate branch always closes the last merge request.
+     * This results in the value of lastAutoupdateMergeRequest to always be null, since 
+     * looking for the last merge request happens after a git push.
+     */
     let lastAutoupdateMergeRequest = await this.gitlab.getLastAutoupdateMergeRequest();
     if (!lastAutoupdateMergeRequest) {
 
       logger.log("Creating merge request...");
       await this.gitlab.createMergeRequest(
         this.generateCommitTitle(),
-        this.generateCommitMessage()
+        this.generateCommitMessage(false, true)
       );
 
     } else {
@@ -105,7 +126,7 @@ export class Autoupdater {
       await this.gitlab.updateMergeRequest(
         lastAutoupdateMergeRequest.iid,
         this.generateCommitTitle(),
-        this.generateCommitMessage()
+        this.generateCommitMessage(false, true)
       );
 
     }
