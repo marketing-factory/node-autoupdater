@@ -76,13 +76,17 @@ export type ConfigurationData = {
 
 function computeProjectRoot({ packages }: ConfigurationDataPreComputation, loadedValue?: string): string {
   if (loadedValue) return loadedValue;
+  if (packages.length === 0) return "";
+  if (!packages.every(p => path.isAbsolute(p))) return "";
   
-  packages = packages.map(p => path.resolve(p));
-  const commonAncestor = commonAncestorPath(...packages);
-  if (commonAncestor) {
-    return getGitRootDirectory(path.dirname(commonAncestor)) ?? "";
+  let commonAncestor = "";
+  if (packages.length === 1 || packages.every(p => p === packages[0])) {
+    commonAncestor = path.dirname(packages[0]);
+  } else {
+    commonAncestor = commonAncestorPath(...packages) ?? "";
   }
-  return "";
+
+  return getGitRootDirectory(commonAncestor) ?? "";
 }
 
 function isConfigurationData(configurationData: Partial<ConfigurationData>): configurationData is ConfigurationData {
@@ -110,7 +114,7 @@ export abstract class ConfigurationManager {
         this.configurationDataIsLoaded = true;
       }
       return this.configurationData;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(error);
       return null;
     }
@@ -146,7 +150,8 @@ export abstract class ConfigurationManager {
             throw new Error(`Configuration file is not in correct format.`);
           }
         } catch (error) {
-          throw new Error(`Error while loading configuration from file ${file}: ${error.message}`);
+          if (error instanceof Error)
+            throw new Error(`Error while loading configuration from file ${file}: ${error.message}`);
         }
       }
     }
@@ -170,7 +175,8 @@ export abstract class ConfigurationManager {
           try {
             envConfigurationData[configKey] = JSON.parse(envVariable);
           } catch (error) {
-            throw new Error(`Non-string env variables must be JSON parsable!\n${error.message}`);
+            if (error instanceof Error)
+              throw new Error(`Non-string env variables must be JSON parsable!\n${error.message}`);
           }
         }
       }
