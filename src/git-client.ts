@@ -9,6 +9,7 @@ const GIT_COMMAND_DEFINITIONS = {
   deleteLocalBranch: (branch: string) => ["branch", "-D", branch],
   deleteRemoteBranch: (repository: string, branch: string) => ["push", "-d", repository, branch],
   branchExists: (branch: string) => ["show-ref", "--verify", "--quiet", `refs/heads/${branch}`],
+  remoteBranchExists: (repository: string, branch: string) => ["ls-remote", "--exit-code", "--heads", repository, branch],
   stageAndCommit: (message: string) => ["commit", "-am", message],
   push: (repository="", branch="") => ["push", repository, branch]
 } as const;
@@ -41,6 +42,15 @@ export function getGitClient(directory: string) {
     branchExists(branch: string): boolean {
       try {
         git.branchExists(branch);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    },
+
+    remoteBranchExists(repository: string, branch: string) {
+      try {
+        git.remoteBranchExists(repository, branch);
         return true;
       } catch (error) {
         return false;
