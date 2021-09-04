@@ -31,5 +31,8 @@
     "!scala",
     "jsx",
     "powershell"
+  ],
+  "cSpell.ignoreWords": [
+    "subproject"
   ]
 }
