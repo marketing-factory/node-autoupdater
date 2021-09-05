@@ -107,7 +107,7 @@ export class Autoupdater {
   }
 
   async createOrUpdateMergeRequest() {
-    /* ISSUE: Pushing to the autoupdate branch always closes the last merge request.
+    /* BUG: Pushing to the autoupdate branch always closes the last merge request.
      * This results in the value of lastAutoupdateMergeRequest to always be null, since 
      * looking for the last merge request happens after a git push.
      */
