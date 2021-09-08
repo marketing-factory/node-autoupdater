@@ -38,7 +38,7 @@ describe(ConfigurationManager.getConfigurationData, () => {
   it("loads configuration from specified config file", () => {
     fs.writeFileSync("/autoupdate.yaml", CONFIGURATION_FILES["/autoupdate.yaml"]);
 
-    const config = ConfigurationManager.getConfigurationData("/autoupdate.yaml");
+    const config = ConfigurationManager.getConfigurationData("/", "/autoupdate.yaml");
 
     expect(config).toEqual({
       gitlab_url: "https://gitlab.com/",
@@ -46,7 +46,6 @@ describe(ConfigurationManager.getConfigurationData, () => {
       gitlab_user_email: "autoupdater@example.org",
       gitlab_auth_token: "personalaccesstoken123",
       gitlab_project_name: "example-project",
-      project_root_directory: "/",
       assignee: "johndoe",
       branch: "support/autoupdate",
       target_branch: "develop",
@@ -58,7 +57,7 @@ describe(ConfigurationManager.getConfigurationData, () => {
     fs.writeFileSync("/autoupdate.yaml", CONFIGURATION_FILES["/autoupdate.yaml"]);
     fs.writeFileSync("/autoupdate-high-priority.yaml", CONFIGURATION_FILES["/autoupdate-high-priority.yaml"]);
 
-    const config = ConfigurationManager.getConfigurationData("/autoupdate.yaml", "/autoupdate-high-priority.yaml");
+    const config = ConfigurationManager.getConfigurationData("/", "/autoupdate.yaml", "/autoupdate-high-priority.yaml");
 
     expect(config).toEqual({
       gitlab_url: "https://gitlab.com/",
@@ -66,7 +65,6 @@ describe(ConfigurationManager.getConfigurationData, () => {
       gitlab_user_email: "autoupdater@example.org",
       gitlab_auth_token: "personalaccesstoken123",
       gitlab_project_name: "example-project",
-      project_root_directory: "/",
       assignee: "johndoe",
       branch: "automatic-updates",
       target_branch: "main",
@@ -78,7 +76,7 @@ describe(ConfigurationManager.getConfigurationData, () => {
     process.env.AUTOUPDATER_PROJECT_NAME = "test-project-123";
     fs.writeFileSync("/autoupdate.yaml", CONFIGURATION_FILES["/autoupdate.yaml"]);
 
-    const config = ConfigurationManager.getConfigurationData("/autoupdate.yaml");
+    const config = ConfigurationManager.getConfigurationData("/", "/autoupdate.yaml");
 
     expect(config!.gitlab_project_name).toEqual("test-project-123");
   });

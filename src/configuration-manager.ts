@@ -1,4 +1,4 @@
-import { load, load as loadYaml } from "js-yaml";
+import { load as loadYaml } from "js-yaml";
 import fs from "fs";
 import path from "path";
 import { homedir } from "os";
@@ -14,7 +14,7 @@ interface ConfigurationDataPreComputation {
   "gitlab_auth_token"?: string,
   // Project Configuration
   "gitlab_project_name": string,
-  "project_root_directory": Computed<string>,
+  //"project_root_directory": Computed<string>,
   "assignee"?: string,
   "branch": string,
   "target_branch": string,
@@ -29,13 +29,6 @@ CONFIGURATION_ENV_VARIABLES
 
 The paths of package.json files, if not absolute, are relative to the configuration file they are
 defined in.
-
-The project root directory, if not provided in a configuration file, is determined as follows:
-  - The longest common ancestor directory of all provided package.json files is calculated.
-  - The project root is then assumed to be the closest directory to the common ancestor that has 
-    a .git/ folder.
-
-
 */
 
 const DEFAULT_CONFIGURATION_DATA: ConfigurationDataPreComputation = {
@@ -46,7 +39,7 @@ const DEFAULT_CONFIGURATION_DATA: ConfigurationDataPreComputation = {
   "gitlab_auth_token": "",
   // Project Configuration
   "gitlab_project_name": "",
-  "project_root_directory": computeProjectRoot,
+  //"project_root_directory": ConfigurationManager.computeDeepestProjectRoot,
   "assignee": "",
   "branch": "support/autoupdate",
   "target_branch": "develop",
@@ -74,26 +67,10 @@ export type ConfigurationData = {
   [Key in keyof C]: C[Key] extends Computed<any> ? Exclude<C[Key], (...args: any[]) => any> : C[Key]
 };
 
-function computeProjectRoot({ packages }: ConfigurationDataPreComputation, loadedValue?: string): string {
-  if (loadedValue) return loadedValue;
-  if (packages.length === 0) return "";
-  if (!packages.every(p => path.isAbsolute(p))) return "";
-  
-  let commonAncestor = "";
-  if (packages.length === 1 || packages.every(p => p === packages[0])) {
-    commonAncestor = path.dirname(packages[0]);
-  } else {
-    commonAncestor = commonAncestorPath(...packages) ?? "";
-  }
-
-  return getGitRootDirectory(commonAncestor) ?? "";
-}
-
 function isConfigurationData(configurationData: Partial<ConfigurationData>): configurationData is ConfigurationData {
   return (
     typeof configurationData.gitlab_url === "string" && configurationData.gitlab_url.length > 0 &&
     typeof configurationData.gitlab_project_name === "string" && configurationData.gitlab_project_name.length > 0 &&
-    typeof configurationData.project_root_directory === "string" && configurationData.project_root_directory.length > 0 &&
     typeof configurationData.branch === "string" && configurationData.branch.length > 0 &&
     typeof configurationData.target_branch === "string" && configurationData.target_branch.length > 0 &&
     Array.isArray(configurationData.packages) && typeof configurationData.packages[0] === "string" &&
@@ -104,9 +81,11 @@ function isConfigurationData(configurationData: Partial<ConfigurationData>): con
 export abstract class ConfigurationManager {
   private static configurationData: ConfigurationData;
   private static configurationFilePaths = CONFIGURATION_FILE_PATHS;
+  private static projectRoot: string;
   private static configurationDataIsLoaded = false;
   
-  static getConfigurationData(...configurationFilePaths: string[]) {
+  static getConfigurationData(projectRoot: string, ...configurationFilePaths: string[]) {
+    this.projectRoot = path.resolve(projectRoot);
     try {
       this.configurationFilePaths = [...this.configurationFilePaths, ...configurationFilePaths];
       if (!this.configurationDataIsLoaded) {
@@ -191,7 +170,7 @@ export abstract class ConfigurationManager {
     let configKey: keyof ConfigurationDataPreComputation;
     for (configKey in configurationDataPreComputation) {
       let configValue = configurationDataPreComputation[configKey];
-      let defaultConfigValue = DEFAULT_CONFIGURATION_DATA[configKey];
+      let defaultConfigValue: unknown = DEFAULT_CONFIGURATION_DATA[configKey];
       if (typeof defaultConfigValue === "function") {
         if (typeof configValue === "function") {
           computedConfigurationData = { 
@@ -229,17 +208,24 @@ export abstract class ConfigurationManager {
       );
     }
 
-    const git = getGitClient(this.configurationData.project_root_directory);
-
-    // package.json files must belong to the same project which must be a git repository
-    if (git === null) {
+    if (getGitRootDirectory(this.projectRoot) === null) {
       throw new Error(
-        `The package.json files provided in one of the configuration files do not belong to the same project ` +
-        `or the project root is not a git repository. package.json files: ${this.configurationData.packages}`
+        `The provided project root directory '${this.projectRoot}' is neither a git repository nor a ` +
+        `subdirectory of a git repository.`
       );
     }
+    
+    const relative = path.relative(this.projectRoot, ConfigurationManager.computeDeepestProjectRoot(this.configurationData));
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      throw new Error(
+        `The package.json files provided in one of the configuration files do not belong to the project ` +
+        `root directory '${this.projectRoot}}'. package.json files: ${this.configurationData.packages}`
+      );
+    }
+    
     // target branch must exist
-    if (!git.branchExists(this.configurationData.target_branch)) {
+    const git = getGitClient(this.projectRoot);
+    if (!git!.branchExists(this.configurationData.target_branch)) {
       throw new Error(`Branch "${this.configurationData.target_branch}" does not exist.`);
     }
     // branch must be different from target branch
@@ -255,6 +241,21 @@ export abstract class ConfigurationManager {
       if (!fs.existsSync(packageJsonFile))
         throw new Error(`Could not find package.json file "${packageJsonFile}".`);
     });
+  }
+
+  static computeDeepestProjectRoot({ packages }: ConfigurationDataPreComputation, loadedValue?: string): string {
+    if (loadedValue) return loadedValue;
+    if (packages.length === 0) return "";
+    if (!packages.every(p => path.isAbsolute(p))) return "";
+
+    let commonAncestor = "";
+    if (packages.length === 1 || packages.every(p => p === packages[0])) {
+      commonAncestor = path.dirname(packages[0]);
+    } else {
+      commonAncestor = commonAncestorPath(...packages) ?? "";
+    }
+
+    return getGitRootDirectory(commonAncestor) ?? "";
   }
 
 }
