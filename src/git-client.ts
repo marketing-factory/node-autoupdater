@@ -1,5 +1,6 @@
-import { prepareCommands } from './prepare-commands';
+import { prepareCommands } from "./prepare-commands";
 import { logger } from "./logger";
+import path from "path";
 
 const GIT_COMMAND_DEFINITIONS = {
   init: (directory: string) => ({ args: ["init -y"], cwd: directory }),
@@ -19,6 +20,10 @@ export function initGitDirectory(directory: string) {
   initCommand(directory);
 }
 
+export function isGitRootDirectory(directory: string) {
+  return getGitRootDirectory(directory) === path.resolve(directory);
+}
+
 export function getGitRootDirectory(anySubdirectory=process.cwd()) {
   const getRootDirectoryCommand = prepareCommands("git", {cmd: GIT_COMMAND_DEFINITIONS.rootDirectory}).cmd;
   try {
@@ -28,13 +33,17 @@ export function getGitRootDirectory(anySubdirectory=process.cwd()) {
   }
 }
 
-export function getGitClient(directory: string) {
-  const rootDirectory = getGitRootDirectory(directory);
-  if (rootDirectory === null) {
-    logger.error(`Directory "${directory}" is neither a git repository nor a subdirectory of a git repository.`);
+/**
+ * @returns an object of functions representing git commands or null if the provided directory is not
+ * a git repository.
+ */
+export function getGitClient(gitRootDirectory: string) {
+  if (!isGitRootDirectory(gitRootDirectory)) {
+    logger.error(`Directory '${gitRootDirectory}' is not a git repository.`);
     return null;
   }
-  const git = prepareCommands("git", GIT_COMMAND_DEFINITIONS, rootDirectory);
+
+  const git = prepareCommands("git", GIT_COMMAND_DEFINITIONS, gitRootDirectory);
   return {
 
     ...git,
