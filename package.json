@@ -1,6 +1,6 @@
 {
   "name": "node-autoupdater",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Update package.json dependencies, push the updates to a separate branch and create a merge request.",
   "main": "dist/index.js",
   "bin": {
@@ -12,7 +12,9 @@
     "start": "node ./dist/index.js",
     "test": "npm run test-unit && npm run test-integration",
     "test-unit": "jest",
-    "test-integration": "jest -c ./test/jest.config.integration.js"
+    "test-integration": "jest -c ./test/jest.config.integration.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test"
   },
   "repository": {
     "type": "git",
