@@ -9,24 +9,25 @@ export class Autoupdater {
   private readonly git: Exclude<ReturnType<typeof getGitClient>, null>;
   private readonly gitlab: Gitlab;
   private readonly config: ConfigurationData;
+  private readonly projectRoot: string;
   private outdatedPackages: PackageManager.OutdatedPackages | null = null;
 
-  constructor(...configurationFilePaths: string[]) {
+  constructor(projectRoot: string, configurationFilePaths: string[]) {
     // TODO: Improve error handling to avoid this mess:
+    
+    this.projectRoot = path.resolve(projectRoot);
+
     logger.group("Loading configuration...");
-    const config = ConfigurationManager.getConfigurationData(...configurationFilePaths);
+    const config = ConfigurationManager.getConfigurationData(this.projectRoot, ...configurationFilePaths);
+    if (!config) throw new Error("An error occurred while loading configuration.");
+    this.config = config;
     logger.groupEnd();
-    if (config) {
-      this.config = config;
-      this.gitlab= new Gitlab(this.config);
-      const git = getGitClient(this.config.project_root_directory);
-      if (git)
-        this.git = git
-      else
-        throw new Error("Couldn't find project root.");
-    } else {
-      throw new Error("An error occurred while loading configuration.");
-    }
+    
+    const git = getGitClient(this.projectRoot);
+    if (!git) throw new Error("Couldn't find project root.");
+    this.git = git
+
+    this.gitlab= new Gitlab(this.config);
   }
 
   start() {
@@ -88,7 +89,7 @@ export class Autoupdater {
     
     for (const packageJsonFile in outdatedPackages) {
       let projectName = path.relative(
-        path.join(this.config.project_root_directory, ".."), 
+        path.join(this.projectRoot, ".."),
         path.join(packageJsonFile, "..")
       );
       if (markdown) projectName = "```" + projectName + "```";
