@@ -12,7 +12,7 @@ export class Autoupdater {
   private readonly projectRoot: string;
   private outdatedPackages: PackageManager.OutdatedPackages | null = null;
 
-  constructor(projectRoot: string, configurationFilePaths: string[]) {
+  constructor(projectRoot: string, configurationFilePaths: string[]=[]) {
     // TODO: Improve error handling to avoid this mess:
     
     this.projectRoot = path.resolve(projectRoot);
