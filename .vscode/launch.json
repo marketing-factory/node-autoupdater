@@ -4,7 +4,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Build Project",
+      "name": "Launch",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -12,13 +12,47 @@
         "--unhandled-rejections=strict"
       ],
       "program": "${workspaceFolder}\\src\\index.ts",
+      "args": [
+        "${input:projectRootDirectory}"
+      ],
+      "sourceMaps": true,
+      "smartStep": true,
+      "internalConsoleOptions": "openOnSessionStart",
+      "outputCapture": "std",
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Build and Launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "runtimeArgs": [
+        "--unhandled-rejections=strict"
+      ],
+      "program": "${workspaceFolder}\\src\\index.ts",
+      "args": [
+        "${input:projectRootDirectory}"
+      ],
       "preLaunchTask": "npm: build",
       "sourceMaps": true,
       "smartStep": true,
       "internalConsoleOptions": "openOnSessionStart",
+      "outputCapture": "std",
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "projectRootDirectory",
+      "description": "The root directoy of the project to run autoupdate against",
+      "default": "C:\\Users\\samer\\Development\\test-project",
+      "type": "promptString"
     }
   ]
 }
