@@ -27,7 +27,7 @@ export function isGitRootDirectory(directory: string) {
 export function getGitRootDirectory(anySubdirectory=process.cwd()) {
   const getRootDirectoryCommand = prepareCommands("git", {cmd: GIT_COMMAND_DEFINITIONS.rootDirectory}).cmd;
   try {
-    return getRootDirectoryCommand(anySubdirectory);
+    return path.resolve(getRootDirectoryCommand(anySubdirectory));
   } catch (error) {
     return null;
   }
