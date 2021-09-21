@@ -120,7 +120,7 @@ export abstract class ConfigurationManager {
         try {
           let loadedYaml = loadYaml(fs.readFileSync(file, "utf-8")) as Partial<ConfigurationData>;
           if (loadedYaml && typeof loadedYaml === "object") {
-            // TODO: do this for all config values that are paths
+            // TODO: Do this for all config values that are paths
             if (loadedYaml.hasOwnProperty("packages") && Array.isArray(loadedYaml.packages)) {
               loadedYaml.packages = loadedYaml.packages.map(p =>  path.resolve(file, "..", p));
             }
@@ -233,8 +233,7 @@ export abstract class ConfigurationManager {
       throw new Error(`Autoupdate branch must be different from target branch "${this.configurationData.target_branch}".`);
     }
 
-    // no unknown configuration is present
-    // TODO
+    // TODO: verify that no unknown configuration is present
 
     // all user provided package.json files must exist
     this.configurationData.packages.forEach((packageJsonFile: string) => {

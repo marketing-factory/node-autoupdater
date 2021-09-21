@@ -33,6 +33,8 @@
     "powershell"
   ],
   "cSpell.ignoreWords": [
+    "Buildx",
+    "softprops",
     "subproject"
   ]
 }
