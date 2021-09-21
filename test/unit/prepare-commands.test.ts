@@ -3,7 +3,7 @@ import * as path from "path";
 
 const nodeCommands = {
   eval: (script: string, ...options: string[]) => [...options, "-p", script],
-  parentDirectory: () => ({ args: ["-p", "process.pwd()"], cwd: ".." }),
+  parentDirectory: () => ({ args: ["-p", "process.cwd()"], cwd: ".." }),
   gitVersion: () => ({ args: ["--version"], executable: "git" })
 }
 
