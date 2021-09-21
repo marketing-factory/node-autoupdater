@@ -3,8 +3,8 @@ import * as path from "path";
 
 const nodeCommands = {
   eval: (script: string, ...options: string[]) => [...options, "-p", script],
-  pwd: (parentDirectory=false) => 
-    ({args: ["/C", "cd"], executable: "cmd", cwd: parentDirectory ? ".." : "."}),
+  parentDirectory: () => ({ args: ["-p", "process.pwd()"], cwd: ".." }),
+  gitVersion: () => ({ args: ["--version"], executable: "git" })
 }
 
 describe(prepareCommands, () => {
@@ -26,9 +26,11 @@ describe(prepareCommands, () => {
     });
 
     describe("When provided with commands as configurable objects, it ...", () => {
-      it("uses specified executable and executes commands in specified directory", () => {
-        expect(node.pwd()).toBe(process.cwd());
-        expect(node.pwd(true)).toBe(path.join(process.cwd(), ".."));
+      it("uses the specified executable", () => {
+        expect(node.gitVersion()).toMatch(/^git version.*/);
+      });
+      it("executes commands in the specified directory", () => {
+        expect(node.parentDirectory()).toBe(path.join(process.cwd(), ".."));
       });
     })
 });
