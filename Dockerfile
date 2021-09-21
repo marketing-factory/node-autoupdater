@@ -1,28 +1,17 @@
-# Builder stage.
-
-FROM node:14-alpine AS builder
-
-WORKDIR /usr/src/app
-
-COPY package*.json tsconfig*.json ./
-
-RUN npm ci --quiet
-
-COPY ./src ./src
-
-RUN npm run build
-
-
-# Production Stage
-
 FROM node:14-alpine
-
-WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package*.json ./
+WORKDIR /usr/src/app
 
-RUN npm ci --quiet --only=production
+RUN apk add --no-cache git
 
-COPY --from=builder /usr/src/app/dist ./dist
+COPY package.json package-lock.json ./
+
+RUN npm ci --only=production
+
+COPY dist/ ./
+
+ENTRYPOINT ["node", "dist/index.js"]
+
+CMD ["/user-project"]
