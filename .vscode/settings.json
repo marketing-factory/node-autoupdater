@@ -1,13 +1,4 @@
 {
-  "typescript.check.tscVersion": false,
-  "files.exclude": {
-    "**/*.js": {
-      "when": "$(basename).ts"
-    },
-    "**/*.map": {
-      "when": "$(basename).map"
-    }
-  },
   "cSpell.words": [
     "autoupdate",
     "AUTOUPDATER",
@@ -36,5 +27,8 @@
     "Buildx",
     "softprops",
     "subproject"
-  ]
+  ],
+  "files.exclude": {
+    "dist/": true
+  }
 }
