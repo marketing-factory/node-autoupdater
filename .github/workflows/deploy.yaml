@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       new-version: ${{ steps.bump-version.outputs.new-version }}
+      tarball-path: ${{ steps.pack-tarball.outputs.tarball-path }}
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js 14
@@ -37,16 +38,16 @@ jobs:
           git config user.email github-actions@github.com
           echo "::set-output name=new-version::$(npm version ${{ github.event.inputs.release_type }})"
           git push --follow-tags
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
-      - name: Upload dist artifact
+      - name: Install, build and test
+        run: npm ci && npm run build && npm test
+      - name: Pack tarball
+        id: pack-tarball
+        run: echo "::set-output name=tarball-path::$(npm pack -s)"
+      - name: Upload tarball
         uses: actions/upload-artifact@v2
         with:
-          name: dist
-          path: |
-            dist/
-            !dist/**/*.js.map
+          name: tarball
+          path: ${{ steps.pack-tarball.outputs.tarball-path }}
           retention-days: 1
 
   publish-to-npm:
@@ -60,12 +61,11 @@ jobs:
           node-version: 14
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
-      - name: Download dist artifact
+      - name: Download tarball
         uses: actions/download-artifact@v2
         with:
-          name: dist
-          path: dist/
-      - run: npm publish
+          name: tarball
+      - run: npm publish ${{ needs.build.outputs.tarball-path }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
