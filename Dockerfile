@@ -1,7 +1,6 @@
 FROM node:14-alpine
 
 ARG TARBALL_PATH
-ENV TARBALL_PATH=${TARBALL_PATH:-*.tgz}
 ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
