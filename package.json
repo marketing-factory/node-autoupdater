@@ -7,7 +7,6 @@
   "bin": {
     "autoupdate": "./bin/autoupdate"
   },
-  "preferGlobal": true,
   "scripts": {
     "build": "tsc",
     "start": "node ./dist/index.js",
