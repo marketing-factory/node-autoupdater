@@ -10,7 +10,7 @@ trim() {
     printf '%s' "$var"
 }
 
-echo "### New commits since last release:" >> $out_file
+echo "#### New commits since last release:" >> $out_file
 readarray -t tags <<< $(git tag -l --sort=-version:refname)
 commits=$(git log --pretty=format:"%s&&&%b;;;" ${tags[1]}..${tags[0]}^)
 
