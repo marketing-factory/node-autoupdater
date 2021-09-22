@@ -13,9 +13,7 @@
     "start": "node ./dist/index.js",
     "test": "npm run test-unit && npm run test-integration",
     "test-unit": "jest",
-    "test-integration": "jest -c ./test/jest.config.integration.js",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test"
+    "test-integration": "jest -c ./test/jest.config.integration.js"
   },
   "repository": {
     "type": "git",

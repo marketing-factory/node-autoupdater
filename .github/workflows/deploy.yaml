@@ -45,7 +45,7 @@ jobs:
         with:
           name: dist
           path: |
-            dist
+            dist/
             !dist/**/*.js.map
           retention-days: 1
 
@@ -64,6 +64,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dist
+          path: dist/
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -77,6 +78,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dist
+          path: dist/
       - name: Log in to the container registry
         uses: docker/login-action@v1
         with:
