@@ -94,8 +94,8 @@ jobs:
           build-args: ${{ needs.build.outputs.tarball-path }}
       - name: Test image
         run: |
-          docker cp . ${{ steps.build-image.outputs.digest }}:/user-project
-          run: docker run ${{ steps.build-image.outputs.digest }} /user-project
+          docker run --mount type=bind,source=$(pwd),target=/user-project \
+            ${{ steps.build-image.outputs.digest }} /user-project
       - name: Build and push image
         uses: docker/build-push-action@v2
         with:
