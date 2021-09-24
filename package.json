@@ -1,5 +1,5 @@
 {
-  "name": "node-autoupdater",
+  "name": "autoupdater",
   "version": "0.0.4",
   "description": "Update package.json dependencies, push the updates to a separate branch and create a merge request.",
   "main": "dist/index.js",
