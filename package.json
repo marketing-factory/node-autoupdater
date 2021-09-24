@@ -43,7 +43,6 @@
     "@gitbeaker/node": "^31.1.0",
     "common-ancestor-path": "^1.0.1",
     "execa": "^5.1.1",
-    "js-yaml": "^4.1.0",
-    "ts-node": "^10.2.1"
+    "js-yaml": "^4.1.0"
   }
 }
