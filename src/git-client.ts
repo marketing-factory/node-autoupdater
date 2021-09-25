@@ -66,6 +66,15 @@ export function getGitClient(gitRootDirectory: string) {
       }
     },
 
+    remoteCanBeAccessed(url: string) {
+      try {
+        git.remoteBranchExists(url, "");
+        return true;
+      } catch (error) {
+        return false;
+      }
+    },
+
     addAndCommitChanges(message: string, branch: string) {
       git.checkoutBranch(branch);
       git.stageAndCommit(message);

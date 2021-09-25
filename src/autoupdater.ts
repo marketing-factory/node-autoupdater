@@ -11,6 +11,7 @@ export class Autoupdater {
   private readonly config: ConfigurationData;
   private readonly projectRoot: string;
   private outdatedPackages: PackageManager.OutdatedPackages | null = null;
+  private useBasicAuth = false;
 
   constructor(projectRoot: string, configurationFilePaths: string[]=[]) {
     // TODO: Improve error handling to avoid this mess:
@@ -32,7 +33,7 @@ export class Autoupdater {
 
   start() {
     this.git.checkoutBranch(this.config.target_branch);
-    this.cleanStateChangesByLastAutoupdate();
+    this.prepare();
 
     const packageJsonFiles = this.config.packages;
     this.outdatedPackages = PackageManager.getOutdatedPackages(packageJsonFiles);
@@ -53,7 +54,14 @@ export class Autoupdater {
     }
   }
 
-  cleanStateChangesByLastAutoupdate() {
+  prepare() {
+    // Disable username and password prompt
+    process.env.GCM_INTERACTIVE = "never";
+    process.env.GIT_TERMINAL_PROMPT = "0";
+    if (!this.git.remoteCanBeAccessed(this.getRemoteUrl())) {
+      this.useBasicAuth = true;
+    }
+
     logger.group(`Cleaning state changes caused by last autoupdate`);
     if (this.git.branchExists(this.config.branch)) {
       logger.log(`Deleting old local branch '${this.config.branch}'...`);
@@ -66,9 +74,9 @@ export class Autoupdater {
     logger.groupEnd();
   }
 
-  getRemoteUrl(useBasicAuth=false): string {
+  getRemoteUrl(): string {
     let url = `${this.config.gitlab_url}/${this.config.gitlab_project_name}.git/`;
-    if (useBasicAuth) {
+    if (this.useBasicAuth) {
       url = url.replace(/^https:\/\//, "");
       url = `https://${this.config.gitlab_user_username}:${this.config.gitlab_auth_token}@${url}`;
     }
