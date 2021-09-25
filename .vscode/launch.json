@@ -11,7 +11,7 @@
       "runtimeArgs": [
         "--unhandled-rejections=strict"
       ],
-      "program": "${workspaceFolder}\\src\\index.ts",
+      "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "${input:projectRootDirectory}"
       ],
@@ -33,7 +33,7 @@
       "runtimeArgs": [
         "--unhandled-rejections=strict"
       ],
-      "program": "${workspaceFolder}\\src\\index.ts",
+      "program": "${workspaceFolder}/src/index.ts",
       "args": [
         "${input:projectRootDirectory}"
       ],
@@ -51,7 +51,7 @@
     {
       "id": "projectRootDirectory",
       "description": "The root directoy of the project to run autoupdate against",
-      "default": "C:\\Users\\samer\\Development\\test-project",
+      "default": "../test-project",
       "type": "promptString"
     }
   ]
