@@ -99,7 +99,7 @@ export class Autoupdater {
         const { current, wanted } = outdatedPackages[packageJsonFile][packageName];
         let update = `${packageName} (${current} => ${wanted})`;
         if (markdown) update = "```" + update + "```"
-        message += `  - ${update})\n`;
+        message += `  - ${update}\n`;
       }
       message += "\n";
     }
