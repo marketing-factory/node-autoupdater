@@ -21,7 +21,10 @@ export function initGitDirectory(directory: string) {
 }
 
 export function isGitRootDirectory(directory: string) {
-  return getGitRootDirectory(directory) === path.resolve(directory);
+  directory = path.resolve(directory);
+  if (process.platform == "win32")
+    return directory.toLowerCase() === getGitRootDirectory(directory)?.toLowerCase();
+  return directory === path.resolve(directory);
 }
 
 export function getGitRootDirectory(anySubdirectory=process.cwd()) {
