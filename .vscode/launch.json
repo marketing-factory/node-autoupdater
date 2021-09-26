@@ -11,7 +11,7 @@
       "runtimeArgs": [
         "--unhandled-rejections=strict"
       ],
-      "program": "${workspaceFolder}/src/index.ts",
+      "program": "${workspaceFolder}/bin/autoupdate",
       "args": [
         "${input:projectRootDirectory}"
       ],
@@ -33,7 +33,7 @@
       "runtimeArgs": [
         "--unhandled-rejections=strict"
       ],
-      "program": "${workspaceFolder}/src/index.ts",
+      "program": "${workspaceFolder}/bin/autoupdate",
       "args": [
         "${input:projectRootDirectory}"
       ],

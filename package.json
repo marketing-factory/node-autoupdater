@@ -2,14 +2,14 @@
   "name": "autoupdater-for-node",
   "version": "0.0.4",
   "description": "Update package.json dependencies, push the updates to a separate branch and create a merge request.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/autoupdater.js",
+  "types": "dist/autoupdater.d.ts",
   "bin": {
     "autoupdate": "./bin/autoupdate"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node ./dist/index.js",
+    "start": "node ./bin/autoupdate",
     "test": "npm run test-unit && npm run test-integration",
     "test-unit": "jest",
     "test-integration": "jest -c ./test/jest.config.integration.js"
