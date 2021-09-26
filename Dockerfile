@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:16-alpine
 
 ARG TARBALL_PATH
 ENV NODE_ENV=production
