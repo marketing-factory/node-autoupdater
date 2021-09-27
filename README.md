@@ -34,7 +34,7 @@ docker run --rm --mount type=bind,source=$(pwd),target=/user-project nodejs-auto
 <!--- TODO: Add config documentation -->
 
 <!--- 
-docker build --build-arg TARBALL_PATH=nodejs-autoupdater-0.0.4.tgz --tag autoupdater:latest .
+docker build --tag autoupdater:latest .
 
 docker run -it --rm --mount type=bind,source=$(pwd),target=/user-project --entrypoint /bin/sh autoupdater
 -->
