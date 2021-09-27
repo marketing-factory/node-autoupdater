@@ -5,6 +5,7 @@
 ## Prerequisite
 - git
 - npm >= v7.x
+- Configure git user and email
 
 Note that this package provides a docker image containing the CLI and everything it needs (see below).
 
