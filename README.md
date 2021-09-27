@@ -2,9 +2,13 @@
 
 <!--- TODO: Add description -->
 
-## Installation and Usage
+## Prerequisite
+- git
+- npm >= v7.x
 
-<br />
+Note that this package provides a docker image containing the CLI and everything it needs (see below).
+
+## Installation and Usage
 
 ### Using npm
 Install `nodejs-autoupdater` globally via `npm`:
@@ -15,9 +19,6 @@ Then use its bin called `autoupdate` with the root directory of your project:
 ```console
 autoupdate <project-root>
 ```
-This method requires git to be installed on your machine.
-
-<br />
 
 ### Docker image
 Pull the image from the container registry:
