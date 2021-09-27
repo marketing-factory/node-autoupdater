@@ -32,29 +32,37 @@ function determineUsedPackageManager(): "npm" | "yarn" {
  */
 export function getOutdatedPackages(packageJsonFiles: string[]) {
   const outdatedPackages: OutdatedPackages = {};
-  let outdatedPackagesOfOnePackageJsonFile: { [name: string]: OutdatedPackageInfo };
-  let outdatedPackageInfo: OutdatedPackageInfo;
-  let outdatedPackagesExist = false;
+
   for (const packageJsonFile of packageJsonFiles) {
-    outdatedPackages[packageJsonFile] = {};
-    outdatedPackagesOfOnePackageJsonFile = JSON.parse(COMMANDS.outdatedJson(packageJsonFile));
-    for (const packageName in outdatedPackagesOfOnePackageJsonFile) {
-      outdatedPackageInfo = outdatedPackagesOfOnePackageJsonFile[packageName];
-      // If current equals wanted then the package has a major update
-      if (outdatedPackageInfo.current !== outdatedPackageInfo.wanted) {
-        // Skip other entries like 'location' and 'dependent':
-        outdatedPackages[packageJsonFile][packageName] = {
-          current: outdatedPackageInfo.current,
-          wanted: outdatedPackageInfo.wanted,
-          latest: outdatedPackageInfo.latest
-        };
-        outdatedPackagesExist = true;
-      }
+    outdatedPackages[packageJsonFile] = getOutdatedPackagesOfOnePackageJsonFile(packageJsonFile);
+  }
+
+  if (Object.keys(outdatedPackages).length === 0)
+    return null;
+  return outdatedPackages;
+}
+
+function getOutdatedPackagesOfOnePackageJsonFile(packageJsonFile: string) {
+  let outdatedPackagesOfOnePackageJsonFile: { [name: string]: OutdatedPackageInfo } =
+    JSON.parse(COMMANDS.outdatedJson(packageJsonFile));
+
+  // Filter unwanted information:
+  for (const packageName in outdatedPackagesOfOnePackageJsonFile) {
+    let outdatedPackageInfo = outdatedPackagesOfOnePackageJsonFile[packageName];
+    // If current equals wanted then the package has a major update
+    if (outdatedPackageInfo.current !== outdatedPackageInfo.wanted) {
+      // Skip other entries like 'location' and 'dependent':
+      outdatedPackagesOfOnePackageJsonFile[packageName] = {
+        current: outdatedPackageInfo.current,
+        wanted: outdatedPackageInfo.wanted,
+        latest: outdatedPackageInfo.latest
+      };
+    } else {
+      delete outdatedPackagesOfOnePackageJsonFile[packageName];
     }
   }
-  if (outdatedPackagesExist)
-    return outdatedPackages;
-  return null;
+
+  return outdatedPackagesOfOnePackageJsonFile;
 }
 
 export function updatePackages(packageJsonFiles: string[]): void {
