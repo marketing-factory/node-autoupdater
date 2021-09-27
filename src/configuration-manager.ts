@@ -86,6 +86,7 @@ export abstract class ConfigurationManager {
   
   static getConfigurationData(projectRoot: string, ...configurationFilePaths: string[]) {
     this.projectRoot = path.resolve(projectRoot);
+    configurationFilePaths.push(projectRoot);
     try {
       this.configurationFilePaths = [...this.configurationFilePaths, ...configurationFilePaths];
       if (!this.configurationDataIsLoaded) {
