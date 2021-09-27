@@ -86,7 +86,7 @@ export abstract class ConfigurationManager {
   
   static getConfigurationData(projectRoot: string, ...configurationFilePaths: string[]) {
     this.projectRoot = path.resolve(projectRoot);
-    configurationFilePaths.push(projectRoot);
+    configurationFilePaths.push(`${projectRoot}/.autoupdater.yaml`);
     try {
       this.configurationFilePaths = [...this.configurationFilePaths, ...configurationFilePaths];
       if (!this.configurationDataIsLoaded) {
