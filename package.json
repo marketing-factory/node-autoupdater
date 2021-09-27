@@ -16,11 +16,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/marketing-factory/node-autoupdater.git"
+    "url": "https://github.com/marketing-factory/nodejs-autoupdater.git"
   },
   "bugs": {
     "email": "samer.alkhabbaz@outlook.com",
-    "url": "https://github.com/marketing-factory/node-autoupdater/issues"
+    "url": "https://github.com/marketing-factory/nodejs-autoupdater/issues"
   },
   "author": "Samer Alkhabbaz",
   "license": "MIT",
