@@ -59,7 +59,13 @@ export function getOutdatedPackages(packageJsonFiles: string[]) {
 
 export function updatePackages(packageJsonFiles: string[]): void {
   for (const packageJsonFile of packageJsonFiles) {
-    logger.log(`Updating packages of ${packageJsonFile}...`);
-    COMMANDS.update(packageJsonFile);
+    logger.log(`Updating dependencies of ${packageJsonFile}...`);
+    try {
+      COMMANDS.update(packageJsonFile);
+    } catch (error) {
+      logger.error(
+        `An error occurred while updating the dependencies of ${packageJsonFile}: ${error}`
+      );
+    }
   }
 }
