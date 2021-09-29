@@ -114,13 +114,14 @@ export class Autoupdater {
   }
 
   getSubprojectRelativePath(packageJsonFile: string) {
-    let subproject = path.relative(
+    let subproject = path.posix.relative(
       path.join(this.projectRoot, ".."),
       path.join(packageJsonFile, "..")
     );
-    if (subproject === path.basename(this.projectRoot))
-      subproject = this.config.gitlab_project_name.replace(/^.*\//, "");
-    return subproject;
+    return subproject.replace(
+      /^.*\//, // project root
+      this.config.gitlab_project_name.replace(/^.*\//, "") // project name without group prefix
+    );
   }
 
   async createOrUpdateMergeRequest() {
