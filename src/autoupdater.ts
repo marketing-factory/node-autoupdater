@@ -120,7 +120,7 @@ export class Autoupdater {
     );
     return subproject.replace(
       /^.*\//, // project root
-      this.config.gitlab_project_name.replace(/^.*\//, "") // project name without group prefix
+      "/" + this.config.gitlab_project_name.replace(/^.*\//, "") // project name without group prefix
     );
   }
 
