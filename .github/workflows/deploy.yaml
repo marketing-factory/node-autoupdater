@@ -59,10 +59,11 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          load: true
       - name: Test image
         run: |
           echo '{"gitlab_project_name": "SAMERkab/example", "target_branch": "main"}' >> .autoupdater.yaml
-          docker run --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ${{ steps.build-image.outputs.digest }}
+          docker run --rm --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ${{ steps.build-image.outputs.digest }}
 
 
   push-image:
