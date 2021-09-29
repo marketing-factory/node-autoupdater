@@ -96,23 +96,31 @@ export class Autoupdater {
     }
     
     for (const packageJsonFile in outdatedPackages) {
-      let projectName = path.relative(
-        path.join(this.projectRoot, ".."),
-        path.join(packageJsonFile, "..")
-      );
-      if (markdown) projectName = "```" + projectName + "```";
+      let projectName = this.getSubprojectRelativePath(packageJsonFile);
+
+      if (markdown) projectName = "`" + projectName + "`";
       if (markdown) message += "### ";
       message += `Updates for ${projectName}\n`;
       for (const packageName in outdatedPackages[packageJsonFile]) {
         const { current, wanted } = outdatedPackages[packageJsonFile][packageName];
         let update = `${packageName} (${current} => ${wanted})`;
-        if (markdown) update = "```" + update + "```"
+        if (markdown) update = "`" + update + "`"
         message += `  - ${update}\n`;
       }
       message += "\n";
     }
 
     return message;
+  }
+
+  getSubprojectRelativePath(packageJsonFile: string) {
+    let subproject = path.relative(
+      path.join(this.projectRoot, ".."),
+      path.join(packageJsonFile, "..")
+    );
+    if (subproject === path.basename(this.projectRoot))
+      subproject = this.config.gitlab_project_name.replace(/^.*\//, "");
+    return subproject;
   }
 
   async createOrUpdateMergeRequest() {
