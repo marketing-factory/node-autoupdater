@@ -37,8 +37,9 @@ jobs:
           git config user.email github-actions@github.com
           echo "::set-output name=new-version::$(npm version ${{ github.event.inputs.release_type }})"
           git push --follow-tags
-      - name: Install, build and test
-        run: npm ci && npm run build && npm test
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
       - name: Pack tarball
         id: pack-tarball
         run: echo "::set-output name=tarball-path::$(npm pack -s)"
