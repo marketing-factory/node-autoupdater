@@ -119,8 +119,8 @@ export class Autoupdater {
       path.join(packageJsonFile, "..")
     );
     return subproject.replace(
-      /^.*\//, // project root
-      "/" + this.config.gitlab_project_name.replace(/^.*\//, "") // project name without group prefix
+      /^[^/]*/, // project root
+      this.config.gitlab_project_name.replace(/^.*\//, "") // project name without group prefix
     );
   }
 
