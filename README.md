@@ -3,8 +3,9 @@
 <!--- TODO: Add description -->
 
 ## Prerequisite
+
 - git
-- npm >= v7.x
+- npm >= 7.x
 - Configure git user and email
 
 Note that this package provides a docker image containing the CLI and everything it needs (see below).
@@ -12,6 +13,7 @@ Note that this package provides a docker image containing the CLI and everything
 ## Installation and Usage
 
 ### Using npm
+
 Install `nodejs-autoupdater` globally via `npm`:
 ```console
 npm install -g nodejs-autoupdater
@@ -22,6 +24,7 @@ autoupdate <project-root>
 ```
 
 ### Docker image
+
 Pull the image from the container registry:
 ```console
 docker pull ghcr.io/marketing-factory/nodejs-autoupdater:latest
