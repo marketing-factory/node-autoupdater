@@ -34,7 +34,11 @@ export function getOutdatedPackages(packageJsonFiles: string[]) {
   const outdatedPackages: OutdatedPackages = {};
 
   for (const packageJsonFile of packageJsonFiles) {
-    outdatedPackages[packageJsonFile] = getOutdatedPackagesOfOnePackageJsonFile(packageJsonFile);
+    let outdatedPackagesOfOnePackageJsonFile =
+      getOutdatedPackagesOfOnePackageJsonFile(packageJsonFile);
+    if (outdatedPackagesOfOnePackageJsonFile !== null) {
+      outdatedPackages[packageJsonFile] = outdatedPackagesOfOnePackageJsonFile;
+    }
   }
 
   if (Object.keys(outdatedPackages).length === 0)
@@ -62,6 +66,8 @@ function getOutdatedPackagesOfOnePackageJsonFile(packageJsonFile: string) {
     }
   }
 
+  if (Object.keys(outdatedPackagesOfOnePackageJsonFile).length === 0)
+    return null;
   return outdatedPackagesOfOnePackageJsonFile;
 }
 
