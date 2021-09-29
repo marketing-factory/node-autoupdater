@@ -41,13 +41,14 @@ jobs:
       - run: npm run build
       - run: npm test
       - name: Pack tarball
-        id: pack-tarball
-        run: echo "::set-output name=tarball-path::$(npm pack -s)"
+        run: |
+          tarball_name=$(npm pack -s)
+          mv $tarball_name most-recent-tarball.tgz
       - name: Upload tarball
         uses: actions/upload-artifact@v2
         with:
           name: tarball
-          path: ${{ steps.pack-tarball.outputs.tarball-path }}
+          path: most-recent-tarball.tgz
           retention-days: 1
 
   build-and-test-image:
@@ -101,11 +102,9 @@ jobs:
         with:
           name: tarball
       - name: Publish
+        run: npm publish most-recent-tarball.tgz
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          TARBALL_PATH=$(ls *.tgz | tail -n 1);
-          npm publish $TARBALL_PATH
   
   github-release:
     runs-on: ubuntu-latest

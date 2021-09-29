@@ -1,3 +1,6 @@
+# This Dockerfile expects that 'npm pack' was used to generate a tarball of
+# this package with the name 'most-recent-tarball.tgz'
+
 FROM node:16-alpine
 
 ENV NODE_ENV=production
@@ -8,10 +11,8 @@ RUN apk add --no-cache git && \
   git config --global user.email "autoupdater@example.com" && \
   git config --global user.name "Autoupdater"
 
-RUN TARBALL_PATH=$(ls *.tgz | tail -n 1)
+COPY most-recent-tarball.tgz container-cmd.sh ./ 
 
-COPY $TARBALL_PATH container-cmd.sh ./ 
-
-RUN npm install -g $TARBALL_PATH
+RUN npm install -g most-recent-tarball.tgz
 
 CMD ["/bin/sh", "container-cmd.sh"]
