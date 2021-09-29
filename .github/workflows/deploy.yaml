@@ -18,6 +18,7 @@ on:
 env:
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  IMAGE_TEST_TAG: ${{ github.repository }}:test
 
 jobs:
   build-and-test:
@@ -60,10 +61,11 @@ jobs:
         with:
           context: .
           load: true
+          tags: ${{ env.IMAGE_TEST_TAG }}
       - name: Test image
         run: |
           echo '{"gitlab_project_name": "SAMERkab/example", "target_branch": "main"}' >> .autoupdater.yaml
-          docker run --rm --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ${{ steps.build-image.outputs.digest }}
+          docker run --rm --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ${{ env.IMAGE_TEST_TAG }}
 
 
   push-image:
