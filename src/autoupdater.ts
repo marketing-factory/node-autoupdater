@@ -97,8 +97,8 @@ export class Autoupdater {
     
     for (const packageJsonFile in outdatedPackages) {
       let projectName = this.getSubprojectRelativePath(packageJsonFile);
+      if (markdown) projectName = `**${projectName}**`;
 
-      if (markdown) projectName = "`" + projectName + "`";
       if (markdown) message += "### ";
       message += `Updates for ${projectName}\n`;
       for (const packageName in outdatedPackages[packageJsonFile]) {
