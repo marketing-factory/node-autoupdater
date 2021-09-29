@@ -8,4 +8,4 @@ lowerdir=/app,\
 upperdir=/tmp/overlay/upper/,\
 workdir=/tmp/overlay/workdir/ /tmp/merged/ 
 
-autoupdate /merged
+autoupdate /tmp/merged
