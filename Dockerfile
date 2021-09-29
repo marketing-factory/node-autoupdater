@@ -9,10 +9,8 @@ RUN git config --global user.email "autoupdater@example.com" && git config --glo
 
 RUN TARBALL_PATH=$(ls *.tgz | tail -n 1)
 
-COPY $TARBALL_PATH ./ 
+COPY $TARBALL_PATH container-cmd.sh ./ 
 
 RUN npm install -g $TARBALL_PATH
 
-ENTRYPOINT ["autoupdate"]
-
-CMD ["/user-project"]
+CMD ["/bin/sh", "container-cmd.sh"]
