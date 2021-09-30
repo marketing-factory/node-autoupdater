@@ -10,8 +10,14 @@ workdir=/tmp/overlay/workdir/ /tmp/merged/
 
 #autoupdate /tmp/merged
 
+echo pwd
 pwd
+echo ===========
+echo ls
 ls
-ls app/
-ls /tmp/
-ls /tmp/merged/
+echo ===========
+echo ls /app
+ls -la /app/
+echo ===========
+echo ls /tmp/merged
+ls -la /tmp/merged/
