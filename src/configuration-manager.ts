@@ -216,7 +216,13 @@ export abstract class ConfigurationManager {
       );
     }
     
-    const relative = path.relative(this.projectRoot, ConfigurationManager.computeDeepestProjectRoot(this.configurationData));
+    const configWithoutDefaultPackages = this.configurationData;
+    configWithoutDefaultPackages.packages =
+      this.configurationData.packages.filter(p => !DEFAULT_CONFIGURATION_DATA.packages.includes(p));
+    const relative = path.relative(
+      this.projectRoot,
+      ConfigurationManager.computeDeepestProjectRoot(configWithoutDefaultPackages)
+    );
     if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new Error(
         `The package.json files provided in one of the configuration files do not belong to the project ` +
