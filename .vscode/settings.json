@@ -6,6 +6,7 @@
     "gitbeaker",
     "Jikgcv",
     "memfs",
+    "netrc",
     "toplevel"
   ],
   "cSpell.enableFiletypes": [

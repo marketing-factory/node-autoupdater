@@ -3,7 +3,6 @@
 <!--- TODO: Add description -->
 
 ## Prerequisite
-
 - git
 - npm >= 7.x
 - Configured git user and email
@@ -23,7 +22,7 @@ Then use its bin called `autoupdate` with the root directory of your project:
 autoupdate <project-root>
 ```
 
-### Docker image
+### Using Docker
 
 Pull the image from the container registry:
 ```console
@@ -34,7 +33,23 @@ And run: (Replacing `"$(pwd)"` with the absolute path to the root directory of y
 docker run --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ghcr.io/marketing-factory/nodejs-autoupdater:latest
 ```
 
+## Configuration
+...
 <!--- TODO: Add config documentation -->
+
+## Authentication
+
+### Git
+
+If no matching credentials are found in a `.netrc` file (`_netrc` on Windows), `nodejs-autoupdater`
+will use the HTTP basic scheme ([RFC 7617](https://datatracker.ietf.org/doc/html/rfc7617)) to authenticate
+git actions such as creating the autoupdate branch and pushing to it.
+This relies on the presence of a username and a password in your configuration file.
+
+### GitLab API
+
+For private repositories with 2FA enabled, a value for `gitlab_auth_token` must be provided in a configuration
+file.
 
 <!--- 
 docker build --tag autoupdater:latest .
