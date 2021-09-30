@@ -6,7 +6,7 @@
 
 - git
 - npm >= 7.x
-- Configure git user and email
+- Configured git user and email
 
 Note that this package provides a docker image containing the CLI and everything it needs (see below).
 
@@ -31,7 +31,7 @@ docker pull ghcr.io/marketing-factory/nodejs-autoupdater:latest
 ```
 And run: (Replacing `"$(pwd)"` with the absolute path to the root directory of your project)
 ```console
-docker run --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro nodejs-autoupdater:latest
+docker run --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ghcr.io/marketing-factory/nodejs-autoupdater:latest
 ```
 
 <!--- TODO: Add config documentation -->
