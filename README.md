@@ -44,7 +44,8 @@ docker run --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ghcr.io/marketing-factory/nod
 If no matching credentials are found in a `.netrc` file (`_netrc` on Windows), `nodejs-autoupdater`
 will use the HTTP basic scheme ([RFC 7617](https://datatracker.ietf.org/doc/html/rfc7617)) to authenticate
 git actions such as creating the autoupdate branch and pushing to it.
-This relies on the presence of a username and a password in your configuration file.
+This relies on the presence of a username and a password in your configuration file (e. g. `gitlab_user_username`
+and `gitlab_auth_token`).
 
 ### GitLab API
 
