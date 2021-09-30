@@ -1,6 +1,6 @@
 {
   "name": "nodejs-autoupdater",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Update package.json dependencies, push the updates to a separate branch and create a merge request.",
   "main": "dist/autoupdater.js",
   "types": "dist/autoupdater.d.ts",
