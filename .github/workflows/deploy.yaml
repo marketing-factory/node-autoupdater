@@ -38,10 +38,10 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           echo "::set-output name=new-version::$(npm version ${{ github.event.inputs.release_type }})"
-          git push --follow-tags
       - run: npm ci
       - run: npm run build
       - run: npm test
+      
       - name: Pack tarball
         run: |
           tarball_name=$(npm pack -s)
@@ -66,6 +66,9 @@ jobs:
         run: |
           echo '{"gitlab_project_name": "SAMERkab/example", "target_branch": "main"}' >> .autoupdater.yaml
           docker run --rm --privileged -v "$(pwd)":/app:ro --entrypoint /bin/sh ls ${{ env.IMAGE_TEST_TAG }}
+
+      - name: Push version change
+        run: git push --follow-tags
 
 
   push-image:
