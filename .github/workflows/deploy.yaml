@@ -65,7 +65,7 @@ jobs:
       - name: Test image
         run: |
           echo '{"gitlab_project_name": "SAMERkab/example", "target_branch": "main"}' >> .autoupdater.yaml
-          docker run --rm --cap-add=SYS_ADMIN -v "$(pwd)":/app:ro ${{ env.IMAGE_TEST_TAG }}
+          docker run --rm --privileged -v "$(pwd)":/app:ro --entrypoint /bin/sh ls ${{ env.IMAGE_TEST_TAG }}
 
 
   push-image:
