@@ -223,9 +223,12 @@ export abstract class ConfigurationManager {
       this.projectRoot,
       ConfigurationManager.computeDeepestProjectRoot(configWithoutDefaultPackages)
     );
-    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    if (
+      configWithoutDefaultPackages.packages.length !== 0 && 
+      (relative.startsWith('..') || path.isAbsolute(relative))
+    ) {
       throw new Error(
-        `The package.json files provided in one of the configuration files do not belong to the project ` +
+        `The package.json files provided in one of the configuration files are not children of the project ` +
         `root directory '${this.projectRoot}}'. package.json files: ${this.configurationData.packages}`
       );
     }
